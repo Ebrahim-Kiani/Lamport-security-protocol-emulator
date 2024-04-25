@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import hashlib
+import queue
 
 Base = declarative_base()
 class Usermodel(Base):
@@ -25,11 +26,24 @@ class Server:
         self.engine = None
         self.Session = None
         self.session = None
+        self.responses = queue.Queue()
+        
 
-    def start(self):
+    def add_response(self, response):
+            self.responses.put(response)
+
+    def get_next_response(self):
+        if not self.responses.empty():
+            return self.responses.get()
+        else:
+            return None
+        
+    def start_server(self):
         self.create_database()
         self.create_sockets()
         self.accept_client_connection()
+        
+    def start_login(self):
         self.handle_client()
 
     def create_database(self):
@@ -55,18 +69,20 @@ class Server:
 
         # Listen for client connections
         self.server_socket.listen(1)
-
-        print("Server listening on {}:{}".format(self.host, self.port))
+        string= str("Server listening on {}:{}".format(self.host, self.port))+ str("\n")
+        self.add_response(string)
 
     def accept_client_connection(self):
         # Accept a client connection
         self.client_socket, addr = self.server_socket.accept()
-        print("Connected to client:", addr)
+        string = str("Connected to client:") + str(addr)+"\n"
+        self.add_response(string)
 
     def handle_client(self):
         # Receive data from the client
         number_of_hash = int(self.client_socket.recv(1024).decode())
-        print("Received the number of hash from client:", number_of_hash)
+        string = str("Received the number of hash from client:") + str(number_of_hash)+"\n"
+        self.add_response(string)
 
         # Send a response back to the client
         response = "Hello from the server, your number of hash has been received!\n"
@@ -74,7 +90,8 @@ class Server:
 
         # Receive data from the client
         username_data = self.client_socket.recv(1024).decode()
-        print("Received the username from client:", username_data)
+        string = str("Received the username from client:") + str(username_data)
+        self.add_response(string)
 
         # Send a response back to the client
         response = "Hello from the server, your username has been received!\n"
@@ -113,21 +130,20 @@ class Server:
         for n in range(number_of_hash, 0, -1):
             data = self.client_socket.recv(1024).decode()
             username_data, password_data = data.split()
-            print("Received the username and hashed password from client:\n", username_data, password_data)
+            string = str("**Received the username and hashed password from client:") + str(password_data) +  str(username_data) +"\n"
+            self.add_response(string)
 
             password_hash = self.make_hash(1, password_data)
             user = self.session.query(Usermodel).filter_by(username=username_data, password=password_hash).first()
 
             if user:
-                print('\nUser found\n')
-                response = "Message from the server: Your username and password have been received, and your account validation is correct! You are logged in :)\n"
+                self.add_response('\nUser found\n')
+                response = "**message from the server, your usernme and password have been recived and And your account validation is correct! you are loged in :) \n"
+                self.add_response(string)
                 user.password = password_data
                 self.session.commit()
                 self.session.close()
             else:
-                response = "Message from the server: Your username and password have been received, but your account validation is incorrect!\n"
+                response = "message from the server, your usernme and password have been recived and But your account validation is incorrect!**\n"
             self.client_socket.send(response.encode())
 
-# Create the server instance and start the server
-server = Server()
-server.start()

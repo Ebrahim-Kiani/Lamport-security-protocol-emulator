@@ -6,11 +6,14 @@ class Client:
         self.host = host
         self.port = port
         self.client_socket = None
+        self.number_of_hash = None
+        self.username = None
+        self.password = None
+        self.responses = []
 
     def connect(self):
         # Create a socket object
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print(self.client_socket)
 
         # Connect to the server
         self.client_socket.connect((self.host, self.port))
@@ -24,42 +27,39 @@ class Client:
             hashencode = hashtext
         return hashtext
 
+    def set_input(self, number_of_hash, username, password):
+        self.number_of_hash = int(number_of_hash)
+        self.username = username
+        self.password = int(password)
+
     def run(self):
         # Connect to the server
         self.connect()
 
         # Send number of hash to the server
-        number_of_hash = int(input('Please enter the number of hashes: '))
-        self.client_socket.send(str(number_of_hash).encode())
+        self.client_socket.send(str(self.number_of_hash).encode())
 
         # Receive the response number of hash from the server
         response = self.client_socket.recv(1024).decode()
-        print("Received response from server:\n", response)
+        self.responses.append("Received response from server:\n" + response)
 
         # Send username to the server
-        username = str(input('Please enter your username: '))
-        self.client_socket.send(username.encode())
+        self.client_socket.send(self.username.encode())
 
         # Receive the response username from the server
         response = self.client_socket.recv(1024).decode()
-        print("Received response from server:\n", response)
-
-        # Get password from user
-        password = 1234
+        self.responses.append("Received response from server:\n" + response)
 
         # Perform login from the client
-        for n in range(number_of_hash, 0, -1):
-            login_data = str(username) + ' ' + str(self.make_hash(n - 1, str(password)))
+        for n in range(self.number_of_hash, 0, -1):
+            login_data = str(self.username) + ' ' + str(self.make_hash(n - 1, self.password))
             self.client_socket.send(login_data.encode())
 
             response = self.client_socket.recv(1024).decode()
-            print("Received login response from server:\n", response)
+            self.responses.append("Received login response from server:\n" + response)
 
         # Close the connection
         self.client_socket.close()
 
-# Create the client instance
-client = Client('127.0.1.1', 12345)
-
-# Run the client
-client.run()
+    def get_responses(self):
+        return self.responses
