@@ -29,6 +29,10 @@ class ClientGUI:
         # Run Button
         self.run_button = tk.Button(self.root, text="Run", command=self.run_client, width=20, bg='green')
         self.run_button.grid(row=3, column=0, columnspan=3)
+        
+        #login Button
+        self.run_button = tk.Button(self.root, text="Login", command=self.run_login, width=20, bg='blue')
+        self.run_button.grid(row=5, column=0, columnspan=3)
 
         # Response Text
         self.response_text = tk.Text(self.root, height=30, width=70)
@@ -52,6 +56,22 @@ class ClientGUI:
         responses = self.client.get_responses()
         for response in responses:
             self.response_text.insert(tk.END, response + "\n")
+            
+    def run_login(self):
+        # Run the client
+        self.client.login()
+        
+        # Cleaning text box before input new
+        self.clear_response_text()
+        
+        # Display the responses in the GUI
+        responses = self.client.get_responses()
+        
+        for response in responses:
+            self.response_text.insert(tk.END, response + "\n")            
+            
+    def clear_response_text(self):
+        self.response_text.delete('1.0', tk.END)
 
 # Create the client instance
 client = Client('127.0.1.1', 12345)

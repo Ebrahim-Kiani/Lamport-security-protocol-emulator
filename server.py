@@ -139,12 +139,12 @@ class Server:
 
             if user:
                 self.add_response('\nUser found\n')
-                response = "**message from the server, your usernme and password have been recived and And your account validation is correct! you are loged in :) \n"
+                response = "**message from the server, your usernme and password have been checked and And your account validation is correct! you are loged in :) \n"
                 self.add_response(string)
                 user.password = password_data
                 self.session.commit()
                 self.session.close()
             else:
-                response = "message from the server, your usernme and password have been recived and But your account validation is incorrect!**\n"
+                response = "message from the server, your usernme and password have been checked and But your account validation is incorrect!**\n"
             self.client_socket.send(response.encode())
 

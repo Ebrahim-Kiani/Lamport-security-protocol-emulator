@@ -51,15 +51,30 @@ class Client:
         self.responses.append("Received response from server:\n" + response)
 
         # Perform login from the client
-        for n in range(self.number_of_hash, 0, -1):
-            login_data = str(self.username) + ' ' + str(self.make_hash(n - 1, self.password))
+        #for n in range(self.number_of_hash, 0, -1):
+        #    login_data = str(self.username) + ' ' + str(self.make_hash(n - 1, self.password))
+        #    self.client_socket.send(login_data.encode())
+
+        #    response = self.client_socket.recv(1024).decode()
+        #    self.responses.append("Received login response from server:\n" + response)
+
+        
+        
+    def login(self):
+        if self.number_of_hash > 0:
+            login_data = str(self.username) + ' ' + str(self.make_hash(self.number_of_hash - 1, self.password))
+            self.number_of_hash = self.number_of_hash - 1
+            
             self.client_socket.send(login_data.encode())
 
             response = self.client_socket.recv(1024).decode()
             self.responses.append("Received login response from server:\n" + response)
-
-        # Close the connection
-        self.client_socket.close()
+            
+        else:
+            
+            self.responses.append("You used all your chances to login\n")
+            # Close the connection
+            self.client_socket.close()
 
     def get_responses(self):
         return self.responses
