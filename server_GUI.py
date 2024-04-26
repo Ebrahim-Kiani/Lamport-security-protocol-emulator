@@ -29,10 +29,15 @@ class ServerGUI:
     def start_server_thread(self):
         try:
             self.server = Server()
+
+            # Start the server
             self.server.start_server()
 
             # Display the responses in the GUI
-            
+            response = self.server.get_next_response()
+            if response:
+                self.response_text.insert(tk.END, response + "\n")
+
             while True:
                 response = self.server.get_next_response()
                 if response:

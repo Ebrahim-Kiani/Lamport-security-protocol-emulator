@@ -41,9 +41,10 @@ class Server:
     def start_server(self):
         self.create_database()
         self.create_sockets()
+
+        # Notify that the server has started
+
         self.accept_client_connection()
-        
-    def start_login(self):
         self.handle_client()
 
     def create_database(self):
