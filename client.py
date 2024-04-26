@@ -48,17 +48,7 @@ class Client:
 
         # Receive the response username from the server
         response = self.client_socket.recv(1024).decode()
-        self.responses.append("Received response from server:\n" + response)
-
-        # Perform login from the client
-        #for n in range(self.number_of_hash, 0, -1):
-        #    login_data = str(self.username) + ' ' + str(self.make_hash(n - 1, self.password))
-        #    self.client_socket.send(login_data.encode())
-
-        #    response = self.client_socket.recv(1024).decode()
-        #    self.responses.append("Received login response from server:\n" + response)
-
-        
+        self.responses.append("Received response from server:\n" + response)        
         
     def login(self):
         if self.number_of_hash > 0:

@@ -1,9 +1,10 @@
 import socket
+import threading
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import hashlib
-import queue
+
 
 Base = declarative_base()
 class Usermodel(Base):
@@ -26,17 +27,18 @@ class Server:
         self.engine = None
         self.Session = None
         self.session = None
-        self.responses = queue.Queue()
-        
+        self.responses = []
+        self.lock = threading.Lock()  # Lock to synchronize access to responses list
+        self.gui = gui
 
     def add_response(self, response):
-            self.responses.put(response)
+        with self.lock:
+            self.responses.append(response)
+            self.gui.update_responses(self.responses)
 
-    def get_next_response(self):
-        if not self.responses.empty():
-            return self.responses.get()
-        else:
-            return None
+    def get_responses(self):
+        with self.lock:
+            return list(self.responses)  # Return a copy of the responses list
         
     def start_server(self):
         self.create_database()
@@ -77,7 +79,7 @@ class Server:
         # Accept a client connection
         self.client_socket, addr = self.server_socket.accept()
         string = str("Connected to client:") + str(addr)+"\n"
-        self.add_response(string)
+        self.responses.append(string)
 
     def handle_client(self):
         # Receive data from the client
@@ -91,7 +93,7 @@ class Server:
 
         # Receive data from the client
         username_data = self.client_socket.recv(1024).decode()
-        string = str("Received the username from client:") + str(username_data)
+        string = str("Received the username from client:\n") + str(username_data)
         self.add_response(string)
 
         # Send a response back to the client
@@ -131,20 +133,20 @@ class Server:
         for n in range(number_of_hash, 0, -1):
             data = self.client_socket.recv(1024).decode()
             username_data, password_data = data.split()
-            string = str("**Received the username and hashed password from client:") + str(password_data) +  str(username_data) +"\n"
+            string = str("**Received the hashed password from client:") +  str(password_data)
             self.add_response(string)
 
             password_hash = self.make_hash(1, password_data)
             user = self.session.query(Usermodel).filter_by(username=username_data, password=password_hash).first()
 
             if user:
-                self.add_response('\nUser found\n')
+                self.add_response('User found and logged in\n')
                 response = "**message from the server, your usernme and password have been checked and And your account validation is correct! you are loged in :) \n"
-                self.add_response(string)
                 user.password = password_data
                 self.session.commit()
                 self.session.close()
             else:
                 response = "message from the server, your usernme and password have been checked and But your account validation is incorrect!**\n"
+                self.add_response('The user was not found and could not be logged in\n')
             self.client_socket.send(response.encode())
 

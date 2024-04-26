@@ -37,7 +37,7 @@ class ClientGUI:
         # Response Text
         self.response_text = tk.Text(self.root, height=30, width=70)
         self.response_text.grid(row=4, column=0, columnspan=2)
-
+        
         self.root.mainloop()
 
     def run_client(self):
@@ -51,7 +51,10 @@ class ClientGUI:
 
         # Run the client
         self.client.run()
-
+        
+        # Cleaning text box before input new
+        self.clear_response_text()
+        
         # Display the responses in the GUI
         responses = self.client.get_responses()
         for response in responses:

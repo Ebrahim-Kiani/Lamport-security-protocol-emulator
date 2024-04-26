@@ -19,7 +19,8 @@ class ServerGUI:
         # Response Text
         self.response_text = tk.Text(self.root, height=30, width=70)
         self.response_text.pack(pady=10)
-
+        
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.mainloop()
 
     def start_server(self):
@@ -27,29 +28,28 @@ class ServerGUI:
         self.thread.start()
 
     def start_server_thread(self):
-        try:
-            self.server = Server()
+        self.server = Server()
 
             # Start the server
-            self.server.start_server()
+        self.server.start_server()
 
-            # Display the responses in the GUI
-            response = self.server.get_next_response()
-            if response:
-                self.response_text.insert(tk.END, response + "\n")
-
-            while True:
-                response = self.server.get_next_response()
-                if response:
+        while True:
+            responses = self.server.get_responses()
+            if responses:
+                for response in responses:
+                    # Add the response to the GUI
                     self.response_text.insert(tk.END, response + "\n")
-                else:
-                    break
 
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
-        finally:
-            self.server = None
+                # Clear the responses in the Server instance
+                self.server.clear_responses()
 
+            # Sleep for a short duration to avoid constant CPU usage
+            time.sleep(0.5)     
+            
+            
+    def clear_response_text(self):
+        self.response_text.delete('1.0', tk.END)
+        
     def on_closing(self):
         if self.server:
             self.server.stop()
