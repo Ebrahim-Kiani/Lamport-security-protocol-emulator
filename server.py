@@ -21,7 +21,8 @@ class Usermodel(Base):
 class Server:
     def __init__(self):
         self.host = '127.0.1.1'
-        self.port = 12345
+        self.port = None
+        self.password = None
         self.server_socket = None
         self.client_socket = None
         self.engine = None
@@ -29,12 +30,20 @@ class Server:
         self.session = None
         self.responses = []
         self.lock = threading.Lock()  # Lock to synchronize access to responses list
+        self.gui = None  # Reference to the GUI instance
+        
+    def set_port_password(self, port, password):
+        self.port = int(port)
+        self.password = int(password)
+
+    def set_gui(self, gui):
         self.gui = gui
 
     def add_response(self, response):
         with self.lock:
             self.responses.append(response)
-            self.gui.update_responses(self.responses)
+            if self.gui:
+                self.gui.update_responses(self.responses)
 
     def get_responses(self):
         with self.lock:
@@ -93,14 +102,14 @@ class Server:
 
         # Receive data from the client
         username_data = self.client_socket.recv(1024).decode()
-        string = str("Received the username from client:\n") + str(username_data)
+        string = str("Received the username from client:") + str(username_data)
         self.add_response(string)
 
         # Send a response back to the client
         response = "Hello from the server, your username has been received!\n"
         self.client_socket.send(response.encode())
 
-        password = "1234"
+        password = self.password
         self.make_and_save_user(number_of_hash, username_data, password)
 
         self.login_user(username_data, number_of_hash, password)
@@ -133,7 +142,7 @@ class Server:
         for n in range(number_of_hash, 0, -1):
             data = self.client_socket.recv(1024).decode()
             username_data, password_data = data.split()
-            string = str("**Received the hashed password from client:") +  str(password_data)
+            string = str("**Received the hashed password from client:") +  str(password_data)+"\n"
             self.add_response(string)
 
             password_hash = self.make_hash(1, password_data)

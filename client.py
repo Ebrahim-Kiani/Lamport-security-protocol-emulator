@@ -2,15 +2,15 @@ import socket
 import hashlib
 
 class Client:
-    def __init__(self, host, port):
+    def __init__(self, host):
         self.host = host
-        self.port = port
+        self.port = None
         self.client_socket = None
         self.number_of_hash = None
         self.username = None
         self.password = None
         self.responses = []
-
+        
     def connect(self):
         # Create a socket object
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,10 +27,11 @@ class Client:
             hashencode = hashtext
         return hashtext
 
-    def set_input(self, number_of_hash, username, password):
+    def set_input(self, number_of_hash, username, password, port):
         self.number_of_hash = int(number_of_hash)
         self.username = username
         self.password = int(password)
+        self.port = int(port)
 
     def run(self):
         # Connect to the server
